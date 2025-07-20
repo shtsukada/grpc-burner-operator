@@ -1,0 +1,87 @@
+# ----------------------------------------
+# Go言語関連
+# ----------------------------------------
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Goのビルドキャッシュと依存管理
+/vendor/
+/bin/
+/coverage.out
+
+# GoLandなど一部IDEの設定
+.idea/
+
+# ----------------------------------------
+# Docker関連
+# ----------------------------------------
+# Dockerが生成するキャッシュや一時ファイル
+.dockerignore
+
+# Docker DesktopのKubernetes構成など（任意）
+.docker/
+
+# ----------------------------------------
+# Kubernetes/Helm関連
+# ----------------------------------------
+# Helmが一時生成するテンプレートなど
+*.tgz
+charts/
+tmpcharts/
+Chart.lock
+
+# kubeconfigのような機密ファイル（個別に追加）
+# ~/.kube/config ← グローバルに除外する方が安全
+
+# ----------------------------------------
+# VS Code（開発用エディタ）の設定
+# ----------------------------------------
+.vscode/
+
+# ----------------------------------------
+# 差分比較・作業用の一時ファイル
+# ----------------------------------------
+*_diff.go
+*_backup.go
+temp/
+scratch/
+
+# ----------------------------------------
+# ArgoCD SSH Key
+# ----------------------------------------
+argocd-ssh-key
+argocd-ssh-key.pub
+
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/*
+Dockerfile.cross
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Go workspace file
+go.work
+
+# Kubernetes Generated files - skip generated files, except for vendored files
+!vendor/**/zz_generated.*
+
+# editor and IDE paraphernalia
+.idea
+.vscode
+*.swp
+*.swo
+*~

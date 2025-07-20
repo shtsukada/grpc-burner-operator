@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Install Kubebuilder
+        run: |
+          curl -L https://github.com/kubernetes-sigs/kubebuilder/releases/latest/download/kubebuilder_$(go env GOOS)_$(go env GOARCH).tar.gz | tar -xz -C /tmp/
+          sudo mv /tmp/kubebuilder_* /usr/local/kubebuilder
+      - name: Add Kubebuilder to PATH
+        run: echo "/usr/local/kubebuilder/bin" >> $GITHUB_PATH
+
+      - name: Verify manifests are up-to-date
+        run: |
+          make manifests
+          git diff --exit-code
+
+      - name: Run go vet
+        run: make vet
+
+      - name: Run unit tests
+        run: make test
