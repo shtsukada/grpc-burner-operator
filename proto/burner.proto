@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package burner;
+
+option go_package = "./;burner";
+
+service Burner {
+  rpc UnaryBurn (BurnRequest) returns (BurnResponse) {}
+}
+
+message BurnRequest {}
+
+message BurnResponse {
+  bytes payload = 1;
+}
