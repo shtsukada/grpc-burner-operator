@@ -18,67 +18,72 @@ package controller
 
 import (
 	"context"
+	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/api/errors"
+	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	grpcv1alpha1 "github.com/shtsukada/grpc-burner-operator/api/v1alpha1"
 )
 
-var _ = Describe("GrpcBurner Controller", func() {
-	Context("When reconciling a resource", func() {
-		const resourceName = "test-resource"
+func TestGrpcBurner_Reconcile_CreatesDeployment(t *testing.T) {
+	ctx := context.Background()
 
-		ctx := context.Background()
+	s := runtime.NewScheme()
+	_ = scheme.AddToScheme(s)
+	_ = grpcv1alpha1.AddToScheme(s)
+	_ = appsv1.AddToScheme(s)
+	_ = corev1.AddToScheme(s)
 
-		typeNamespacedName := types.NamespacedName{
-			Name:      resourceName,
-			Namespace: "default", // TODO(user):Modify as needed
-		}
-		grpcburner := &grpcv1alpha1.GrpcBurner{}
+	client := fake.NewClientBuilder().WithScheme(s).Build()
 
-		BeforeEach(func() {
-			By("creating the custom resource for the Kind GrpcBurner")
-			err := k8sClient.Get(ctx, typeNamespacedName, grpcburner)
-			if err != nil && errors.IsNotFound(err) {
-				resource := &grpcv1alpha1.GrpcBurner{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: "default",
-					},
-					// TODO(user): Specify other spec details if needed.
-				}
-				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-			}
-		})
+	grpc := &grpcv1alpha1.GrpcBurner{
+		ObjectMeta: ctrl.ObjectMeta{
+			Name:      "test-grpcburner",
+			Namespace: "default",
+		},
+		Spec: grpcv1alpha1.GrpcBurnerSpec{
+			Replicas:    1,
+			Mode:        "unary",
+			MessageSize: 100,
+			QPS:         10,
+			Duration:    "10s",
+		},
+	}
 
-		AfterEach(func() {
-			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &grpcv1alpha1.GrpcBurner{}
-			err := k8sClient.Get(ctx, typeNamespacedName, resource)
-			Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, client.Create(ctx, grpc))
 
-			By("Cleanup the specific resource instance GrpcBurner")
-			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
-		})
-		It("should successfully reconcile the resource", func() {
-			By("Reconciling the created resource")
-			controllerReconciler := &GrpcBurnerReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			}
-
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
-		})
+	reconciler := &GrpcBurnerReconciler{
+		Client: client,
+		Scheme: s,
+	}
+	_, err := reconciler.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      grpc.Name,
+			Namespace: grpc.Namespace,
+		},
 	})
-})
+	require.NoError(t, err)
+
+	var deploy appsv1.Deployment
+	err = client.Get(ctx, types.NamespacedName{
+		Name:      "test-grpcburner-burner",
+		Namespace: "default",
+	}, &deploy)
+	require.NoError(t, err)
+	require.Equal(t, int32(1), *deploy.Spec.Replicas)
+
+	var updated grpcv1alpha1.GrpcBurner
+	err = client.Get(ctx, types.NamespacedName{
+		Name:      grpc.Name,
+		Namespace: grpc.Namespace,
+	}, &updated)
+	require.NoError(t, err)
+	require.Contains(t, updated.Finalizers, grpcburnerFinalizer)
+}

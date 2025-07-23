@@ -17,31 +17,41 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// GrpcBurnerSpec defines the desired state of GrpcBurner.
+// GrpcBurnerSpec defines the desired state of GrpcBurner
 type GrpcBurnerSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// +kubebuilder:validation:Minimum=1
+	Replicas int32 `json:"replicas"`
 
-	// Foo is an example field of GrpcBurner. Edit grpcburner_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// +kubebuilder:validation:Enum=unary;server-streaming;client-streaming;bidirectional-streaming
+	Mode string `json:"mode"`
+
+	// +kubebuilder:validation:Minimum=1
+	MessageSize int32 `json:"messageSize"`
+
+	// +kubebuilder:validation:Minimum=1
+	QPS int32 `json:"qps"`
+
+	// +kubebuilder:validation:Pattern=^\d+[smh]$
+	Duration string `json:"duration"`
+
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
-// GrpcBurnerStatus defines the observed state of GrpcBurner.
+// GrpcBurnerStatus defines the observed state of GrpcBurner
 type GrpcBurnerStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	ReadyReplicas int32       `json:"readyReplicas,omitempty"`
+	Phase         string      `json:"phase,omitempty"`
+	LastRunTime   metav1.Time `json:"lastRunTime,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// GrpcBurner is the Schema for the grpcburners API.
+// GrpcBurner is the Schema for the grpcburners API
 type GrpcBurner struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -52,7 +62,7 @@ type GrpcBurner struct {
 
 // +kubebuilder:object:root=true
 
-// GrpcBurnerList contains a list of GrpcBurner.
+// GrpcBurnerList contains a list of GrpcBurner
 type GrpcBurnerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

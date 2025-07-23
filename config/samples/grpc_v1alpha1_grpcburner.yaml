@@ -1,9 +1,18 @@
 apiVersion: grpc.burner.dev/v1alpha1
 kind: GrpcBurner
 metadata:
-  labels:
-    app.kubernetes.io/name: grpc-burner-operator
-    app.kubernetes.io/managed-by: kustomize
-  name: grpcburner-sample
+  name: sample-grpcburner
+  namespace: default
 spec:
-  # TODO(user): Add fields here
+  replicas: 1
+  mode: unary
+  messageSize: 512
+  qps: 100
+  duration: "5m"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
