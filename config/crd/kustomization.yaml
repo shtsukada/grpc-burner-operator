@@ -3,6 +3,7 @@
 # It should be run by config/default
 resources:
 - bases/grpc.burner.dev_grpcburners.yaml
+- bases/grpc.burner.dev_burnerjobs.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:

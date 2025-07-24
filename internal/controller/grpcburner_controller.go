@@ -66,7 +66,7 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	var deploy appsv1.Deployment
 	_ = r.Get(ctx, types.NamespacedName{Name: deployName, Namespace: grpcburner.Namespace}, &deploy)
 
-	if grpcburner.ObjectMeta.DeletionTimestamp.IsZero() {
+	if grpcburner.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(&grpcburner, grpcburnerFinalizer) {
 			controllerutil.AddFinalizer(&grpcburner, grpcburnerFinalizer)
 			if err := r.Update(ctx, &grpcburner); err != nil {
