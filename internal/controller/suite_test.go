@@ -59,7 +59,7 @@ func TestMain(m *testing.M) {
 	_ = grpcv1alpha1.AddToScheme(scheme)
 
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{"/Users/tsukadashunsuke/Documents/grpc-burner-operator/config/crd/bases"},
+		CRDDirectoryPaths: []string{"../../config/crd/bases"},
 	}
 
 	cfg, err := testEnv.Start()

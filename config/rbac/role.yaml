@@ -5,6 +5,38 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - burner.grpc-demo.dev
+  resources:
+  - burnerjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - burner.grpc-demo.dev
+  resources:
+  - burnerjobs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - grpc.burner.dev
   resources:
   - grpcburners

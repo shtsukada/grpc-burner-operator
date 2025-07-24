@@ -41,7 +41,10 @@ func TestGrpcBurner_Reconcile_CreatesDeployment(t *testing.T) {
 	_ = appsv1.AddToScheme(s)
 	_ = corev1.AddToScheme(s)
 
-	client := fake.NewClientBuilder().WithScheme(s).Build()
+	client := fake.NewClientBuilder().
+		WithScheme(s).
+		WithStatusSubresource(&grpcv1alpha1.GrpcBurner{}).
+		Build()
 
 	grpc := &grpcv1alpha1.GrpcBurner{
 		ObjectMeta: ctrl.ObjectMeta{
