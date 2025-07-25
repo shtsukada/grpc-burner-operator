@@ -5,7 +5,7 @@ metadata:
   namespace: default
 spec:
   replicas: 1
-  mode: unary
+  mode: "unary"
   messageSize: 512
   qps: 100
   duration: "5m"
