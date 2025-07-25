@@ -47,15 +47,15 @@ type ObservabilityConfigReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/reconcile
 func (r *ObservabilityConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	var obsConfig grpcv1alpha1.ObservabilityConfig
 	if err := r.Get(ctx, req.NamespacedName, &obsConfig); err != nil {
-		log.Error(err, "unable to fetch ObservabilityConfig")
+		logger.Error(err, "unable to fetch ObservabilityConfig")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	log.Info("Reconciling ObservabilityConfig",
+	logger.Info("Reconciling ObservabilityConfig",
 		"name", obsConfig.Name,
 		"logLevel", obsConfig.Spec.LogLevel,
 		"metricsEnabled", obsConfig.Spec.MetricsEnabled,
@@ -66,7 +66,7 @@ func (r *ObservabilityConfigReconciler) Reconcile(ctx context.Context, req ctrl.
 	obsConfig.Status.Message = "settings changed"
 
 	if err := r.Status().Update(ctx, &obsConfig); err != nil {
-		log.Error(err, "Status update failed")
+		logger.Error(err, "Status update failed")
 		return ctrl.Result{}, err
 	}
 

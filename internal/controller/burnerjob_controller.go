@@ -25,9 +25,9 @@ type BurnerJobReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=burner.grpc-demo.dev,resources=burnerjobs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=burner.grpc-demo.dev,resources=burnerjobs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=burner.grpc-demo.dev,resources=burnerjobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=burner.grpc-demo.dev,resources=burnerjobs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 
 func (r *BurnerJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("burnerjob", req.NamespacedName)
