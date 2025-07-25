@@ -5,40 +5,9 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - batch
-  resources:
-  - jobs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - burner.grpc-demo.dev
-  resources:
-  - burnerjobs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - burner.grpc-demo.dev
-  resources:
-  - burnerjobs/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - grpc.burner.dev
   resources:
+  - burnerjobs
   - grpcburners
   - observabilityconfigs
   verbs:
@@ -52,6 +21,7 @@ rules:
 - apiGroups:
   - grpc.burner.dev
   resources:
+  - burnerjobs/finalizers
   - grpcburners/finalizers
   - observabilityconfigs/finalizers
   verbs:
@@ -59,6 +29,7 @@ rules:
 - apiGroups:
   - grpc.burner.dev
   resources:
+  - burnerjobs/status
   - grpcburners/status
   - observabilityconfigs/status
   verbs:

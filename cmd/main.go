@@ -39,6 +39,7 @@ import (
 
 	grpcv1alpha1 "github.com/shtsukada/grpc-burner-operator/api/v1alpha1"
 	"github.com/shtsukada/grpc-burner-operator/internal/controller"
+	"github.com/shtsukada/grpc-burner-operator/internal/metrics"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -200,6 +201,8 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+
+	metrics.RegisterCustomMetrics()
 
 	if err := (&controller.GrpcBurnerReconciler{
 		Client: mgr.GetClient(),
