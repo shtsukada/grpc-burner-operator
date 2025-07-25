@@ -40,13 +40,22 @@ spec:
           spec:
             description: ObservabilityConfigSpec defines the desired state of ObservabilityConfig.
             properties:
-              foo:
-                description: Foo is an example field of ObservabilityConfig. Edit
-                  observabilityconfig_types.go to remove/update
+              logLevel:
                 type: string
+              metricsEnabled:
+                type: boolean
+            required:
+            - metricsEnabled
             type: object
           status:
             description: ObservabilityConfigStatus defines the observed state of ObservabilityConfig.
+            properties:
+              appliedLogLevel:
+                type: string
+              message:
+                type: string
+              metricsActive:
+                type: boolean
             type: object
         type: object
     served: true

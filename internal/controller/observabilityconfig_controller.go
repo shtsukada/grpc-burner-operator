@@ -76,8 +76,6 @@ func (r *ObservabilityConfigReconciler) Reconcile(ctx context.Context, req ctrl.
 // SetupWithManager sets up the controller with the Manager.
 func (r *ObservabilityConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
-		// For().
-		Named("observabilityconfig").
+		For(&grpcv1alpha1.ObservabilityConfig{}).
 		Complete(r)
 }

@@ -40,6 +40,7 @@ rules:
   - grpc.burner.dev
   resources:
   - grpcburners
+  - observabilityconfigs
   verbs:
   - create
   - delete
@@ -52,12 +53,14 @@ rules:
   - grpc.burner.dev
   resources:
   - grpcburners/finalizers
+  - observabilityconfigs/finalizers
   verbs:
   - update
 - apiGroups:
   - grpc.burner.dev
   resources:
   - grpcburners/status
+  - observabilityconfigs/status
   verbs:
   - get
   - patch
