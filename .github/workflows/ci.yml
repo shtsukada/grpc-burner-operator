@@ -22,11 +22,9 @@ jobs:
       - name: Install Kubebuilder
         run: |
           KUBEBUILDER_VERSION=3.14.0
-          OS=$(go env GOOS)
-          ARCH=$(go env GOARCH)
-          curl -L https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${KUBEBUILDER_VERSION}/kubebuilder_${KUBEBUILDER_VERSION}_${OS}_${ARCH}.tar.gz \
-            | tar -xz -C /tmp/
-          sudo mv /tmp/kubebuilder_${KUBEBUILDER_VERSION}_${OS}_${ARCH} /usr/local/kubebuilder
+          curl -L "https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${KUBEBUILDER_VERSION}/kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64.tar.gz" -o kubebuilder.tar.gz
+          tar -xzf kubebuilder.tar.gz -C /tmp/
+          sudo mv /tmp/kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64 /usr/local/kubebuilder
       - name: Add Kubebuilder to PATH
         run: echo "/usr/local/kubebuilder/bin" >> $GITHUB_PATH
 
