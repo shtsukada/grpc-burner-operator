@@ -18,4 +18,13 @@ resources:
   kind: GrpcBurner
   path: github.com/shtsukada/grpc-burner-operator/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: burner.dev
+  group: grpc
+  kind: ObservabilityConfig
+  path: github.com/shtsukada/grpc-burner-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

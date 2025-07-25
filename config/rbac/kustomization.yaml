@@ -22,6 +22,9 @@ resources:
 # default, aiding admins in cluster management. Those roles are
 # not used by the grpc-burner-operator itself. You can comment the following lines
 # if you do not want those helpers be installed with your Project.
+- observabilityconfig_admin_role.yaml
+- observabilityconfig_editor_role.yaml
+- observabilityconfig_viewer_role.yaml
 - grpcburner_admin_role.yaml
 - grpcburner_editor_role.yaml
 - grpcburner_viewer_role.yaml

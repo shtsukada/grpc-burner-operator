@@ -1,0 +1,7 @@
+apiVersion: grpc.burner.dev/v1alpha1
+kind: ObservabilityConfig
+metadata:
+  name: sample-observability
+spec:
+  metricsEnabled: true
+  logLevel: debug

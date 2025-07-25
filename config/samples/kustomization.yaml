@@ -1,4 +1,5 @@
 ## Append samples of your project ##
 resources:
 - grpc_v1alpha1_grpcburner.yaml
+- grpc_v1alpha1_observabilityconfig.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
