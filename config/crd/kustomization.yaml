@@ -4,9 +4,10 @@
 resources:
 - bases/grpc.burner.dev_grpcburners.yaml
 - bases/grpc.burner.dev_burnerjobs.yaml
+- bases/grpc.burner.dev_observabilityconfigs.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
-patches:
+# patches:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
 # patches here are for enabling the conversion webhook for each CRD
 # +kubebuilder:scaffold:crdkustomizewebhookpatch

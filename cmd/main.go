@@ -208,6 +208,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "GrpcBurner")
 		os.Exit(1)
 	}
+	if err := (&controller.ObservabilityConfigReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ObservabilityConfig")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	if err = (&controller.BurnerJobReconciler{
