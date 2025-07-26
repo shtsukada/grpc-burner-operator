@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"go.opentelemetry.io/otel"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,6 +32,10 @@ type BurnerJobReconciler struct {
 
 func (r *BurnerJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("burnerjob", req.NamespacedName)
+
+	tracer := otel.Tracer("controller.burnerjob")
+	ctx, span := tracer.Start(ctx, "Reconcile")
+	defer span.End()
 
 	burnerjob := &burnerv1alpha1.BurnerJob{}
 	if err := r.Get(ctx, req.NamespacedName, burnerjob); err != nil {

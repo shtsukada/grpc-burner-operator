@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
 	"os"
@@ -40,6 +41,7 @@ import (
 	grpcv1alpha1 "github.com/shtsukada/grpc-burner-operator/api/v1alpha1"
 	"github.com/shtsukada/grpc-burner-operator/internal/controller"
 	"github.com/shtsukada/grpc-burner-operator/internal/metrics"
+	"github.com/shtsukada/grpc-burner-operator/internal/tracing"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -86,8 +88,20 @@ func main() {
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
-
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	ctx := context.Background()
+
+	tp, err := tracing.InitTracer(ctx)
+	if err != nil {
+		setupLog.Error(err, "failed to initialize tracer")
+		os.Exit(1)
+	}
+	defer func() {
+		if err := tp.Shutdown(ctx); err != nil {
+			setupLog.Error(err, "failed to shutdown tracer provider")
+		}
+	}()
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
