@@ -20,11 +20,11 @@ import (
 	"context"
 
 	grpcv1alpha1 "github.com/shtsukada/grpc-burner-operator/api/v1alpha1"
+	"go.opentelemetry.io/otel"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	// logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // ObservabilityConfigReconciler reconciles a ObservabilityConfig object
@@ -48,6 +48,10 @@ type ObservabilityConfigReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/reconcile
 func (r *ObservabilityConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+
+	tracer := otel.Tracer("controller.observabilityconfig")
+	ctx, span := tracer.Start(ctx, "Reconcile")
+	defer span.End()
 
 	var obsConfig grpcv1alpha1.ObservabilityConfig
 	if err := r.Get(ctx, req.NamespacedName, &obsConfig); err != nil {

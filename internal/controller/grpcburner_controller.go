@@ -23,6 +23,7 @@ import (
 
 	grpcv1alpha1 "github.com/shtsukada/grpc-burner-operator/api/v1alpha1"
 	"github.com/shtsukada/grpc-burner-operator/internal/metrics"
+	"go.opentelemetry.io/otel"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -59,6 +60,10 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	log := logf.FromContext(ctx)
 
 	metrics.ReconcileTotal.WithLabelValues("grpcburner").Inc()
+
+	tracer := otel.Tracer("controller.grpcburner")
+	ctx, span := tracer.Start(ctx, "Reconcile")
+	defer span.End()
 
 	var grpcburner grpcv1alpha1.GrpcBurner
 	if err := r.Get(ctx, req.NamespacedName, &grpcburner); err != nil {
