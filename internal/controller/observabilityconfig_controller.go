@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // ObservabilityConfigReconciler reconciles a ObservabilityConfig object
@@ -47,7 +47,11 @@ type ObservabilityConfigReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/reconcile
 func (r *ObservabilityConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
+	logger := logf.FromContext(ctx).WithValues(
+		"controller", "observabilityconfig",
+		"name", req.Name,
+		"namespace", req.Namespace,
+	)
 
 	tracer := otel.Tracer("controller.observabilityconfig")
 	ctx, span := tracer.Start(ctx, "Reconcile")
@@ -59,21 +63,22 @@ func (r *ObservabilityConfigReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	logger.Info("Reconciling ObservabilityConfig",
-		"name", obsConfig.Name,
+	logger = logger.WithValues(
 		"logLevel", obsConfig.Spec.LogLevel,
 		"metricsEnabled", obsConfig.Spec.MetricsEnabled,
 	)
+
+	logger.Info("Reconciling ObservabilityConfig")
 
 	obsConfig.Status.AppliedLogLevel = obsConfig.Spec.LogLevel
 	obsConfig.Status.MetricsActive = &obsConfig.Spec.MetricsEnabled
 	obsConfig.Status.Message = "settings changed"
 
 	if err := r.Status().Update(ctx, &obsConfig); err != nil {
-		logger.Error(err, "Status update failed")
+		logger.Error(err, "Failed to update ObservabilityConfig status")
 		return ctrl.Result{}, err
 	}
-
+	logger.Info("ObservabilityConfig status updated successfully")
 	return ctrl.Result{}, nil
 }
 
