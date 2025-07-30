@@ -46,6 +46,8 @@ type GrpcBurnerReconciler struct {
 // +kubebuilder:rbac:groups=grpc.burner.dev,resources=grpcburners,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=grpc.burner.dev,resources=grpcburners/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=grpc.burner.dev,resources=grpcburners/finalizers,verbs=update
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -87,6 +89,12 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if grpcburner.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(&grpcburner, grpcburnerFinalizer) {
 			log.Info("Adding finalizer")
+
+			if err := r.Get(ctx, req.NamespacedName, &grpcburner); err != nil {
+				log.Error(err, "Failed to re-fetch GrpcBurner before adding finalizer")
+				return ctrl.Result{}, err
+			}
+
 			controllerutil.AddFinalizer(&grpcburner, grpcburnerFinalizer)
 			if err := r.Update(ctx, &grpcburner); err != nil {
 				log.Error(err, "Failed to update GrpcBurner with finalizer")
@@ -95,21 +103,31 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	} else {
 		if controllerutil.ContainsFinalizer(&grpcburner, grpcburnerFinalizer) {
+			deployName := fmt.Sprintf("%s-burner", grpcburner.Name)
+			deploy := appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      deployName,
+					Namespace: grpcburner.Namespace,
+				},
+			}
+
 			log.Info("Running finalizer: deleting Deployment", "deployment", deployName)
+
 			if err := r.Delete(ctx, &deploy); client.IgnoreNotFound(err) != nil {
 				log.Error(err, "Failed to delete Deployment during finalization", "deployment", deployName)
 				metrics.ReconcileErrors.WithLabelValues("grpcburner").Inc()
 				return ctrl.Result{}, err
 			}
+
 			controllerutil.RemoveFinalizer(&grpcburner, grpcburnerFinalizer)
 			if err := r.Update(ctx, &grpcburner); err != nil {
 				log.Error(err, "Failed to remove finalizer from GrpcBurner")
 				metrics.ReconcileErrors.WithLabelValues("grpcburner").Inc()
 				return ctrl.Result{}, err
 			}
+
 			log.Info("Finalizer cleanup complete")
 		}
-		return ctrl.Result{}, nil
 	}
 	err := r.Get(ctx, types.NamespacedName{Name: deployName, Namespace: grpcburner.Namespace}, &deploy)
 	if errors.IsNotFound(err) {
@@ -129,6 +147,12 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		desired := generateDeployment(&grpcburner)
 		if !isDeploymentSpecEqual(deploy.Spec, desired.Spec) {
 			log.Info("Updating Deployment spec to match desired state")
+
+			if err := r.Get(ctx, types.NamespacedName{Name: deployName, Namespace: grpcburner.Namespace}, &deploy); err != nil {
+				log.Error(err, "Failed to re-fetch Deployment before update")
+				return ctrl.Result{}, err
+			}
+
 			deploy.Spec = desired.Spec
 			if err := r.Update(ctx, &deploy); err != nil {
 				log.Error(err, "Failed to update Deployment spec")
@@ -165,7 +189,12 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			metrics.ReconcileErrors.WithLabelValues("grpcburner").Inc()
 			return ctrl.Result{}, err
 		}
-		if err := r.Status().Update(ctx, &grpcburner); err != nil {
+
+		fresh.Status.ReadyReplicas = grpcburner.Status.ReadyReplicas
+		fresh.Status.Phase = grpcburner.Status.Phase
+		fresh.Status.LastRunTime = grpcburner.Status.LastRunTime
+
+		if err := r.Status().Update(ctx, &fresh); err != nil {
 			log.Error(err, "Failed to update GrpcBurner status")
 			metrics.ReconcileErrors.WithLabelValues("grpcburner").Inc()
 			return ctrl.Result{}, err
