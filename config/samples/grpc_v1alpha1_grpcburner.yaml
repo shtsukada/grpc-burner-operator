@@ -2,7 +2,7 @@ apiVersion: grpc.burner.dev/v1alpha1
 kind: GrpcBurner
 metadata:
   name: sample-grpcburner
-  namespace: default
+  namespace: grpc-burner-operator-system
 spec:
   replicas: 1
   mode: "unary"
@@ -16,3 +16,4 @@ spec:
     limits:
       cpu: "200m"
       memory: "256Mi"
+  image: stsukada/grpc-burner-demo:latest

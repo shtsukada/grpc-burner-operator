@@ -1,11 +1,14 @@
-FROM golang:1.24.0 as builder
+FROM golang:1.24.0 AS builder
 
 WORKDIR /app
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o grpc-burner cmd/grpc-burner/main.go
+ARG TARGETARCH=amd64
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o grpc-burner ./cmd/grpc-burner
 
-FROM alpine:3.20
-WORKDIR /app
-COPY --from=builder /app/grpc-burner /grpc-burner
+# Stage 2: runtime
+FROM alpine:3.18
+WORKDIR /
+COPY --from=builder /app/grpc-burner .
+EXPOSE 50051
 ENTRYPOINT ["/grpc-burner"]

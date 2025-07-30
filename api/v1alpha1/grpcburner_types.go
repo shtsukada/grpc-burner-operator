@@ -39,6 +39,9 @@ type GrpcBurnerSpec struct {
 	Duration string `json:"duration"`
 
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// +kubebuilder:validation:Required
+	Image string `json:"image,omitempty"`
 }
 
 // GrpcBurnerStatus defines the observed state of GrpcBurner

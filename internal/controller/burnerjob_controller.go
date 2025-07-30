@@ -30,6 +30,8 @@ type BurnerJobReconciler struct {
 // +kubebuilder:rbac:groups=grpc.burner.dev,resources=burnerjobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=grpc.burner.dev,resources=burnerjobs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=grpc.burner.dev,resources=burnerjobs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 
 func (r *BurnerJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx).WithValues(
@@ -74,7 +76,7 @@ func (r *BurnerJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 						Containers: []corev1.Container{
 							{
 								Name:  "grpc-burner",
-								Image: "stsukada/grpc-burner-demo:latest",
+								Image: "stsukada/grpc-burner-operator:latest",
 								Args: []string{
 									"--target", burnerjob.Spec.TargetService,
 									"--qps", fmt.Sprintf("%d", burnerjob.Spec.QPS),
