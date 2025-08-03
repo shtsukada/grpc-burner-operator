@@ -57,6 +57,11 @@ scratch/
 argocd-ssh-key
 argocd-ssh-key.pub
 
+# secrets and local configs
+terraform.tfvars
+*.tfstate
+*.tfstate.*
+.terraform/
 
 # Binaries for programs and plugins
 *.exe

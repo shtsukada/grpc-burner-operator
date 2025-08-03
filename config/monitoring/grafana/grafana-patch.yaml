@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-prometheus-stack-grafana
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: grafana
+    spec:
+      volumes:
+        - name: tempo-datasources
+          configMap:
+            name: tempo-datasource
+      containers:
+        - name: grafana
+          volumeMounts:
+            - name: tempo-datasources
+              mountPath: /etc/grafana/provisioning/datasources/
+              readOnly: true
