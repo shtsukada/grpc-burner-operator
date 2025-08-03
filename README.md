@@ -11,5 +11,3 @@ Kubernetes上でgRPC負荷生成とObservability統合を行うためのカス�
 
 ## 概要
 `grpc-burner-operator`はカスタムリソース(CRD)を通じてKubernetes上でgRPCサーバと負荷生成Podを動的に管理します。将来的にObservabilityの統合やGitOps連携も実装します。
-
-

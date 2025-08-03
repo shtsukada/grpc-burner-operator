@@ -1,0 +1,16 @@
+loki:
+  persistence:
+    enabled: true
+    storageClassName: standard
+    size: 10Gi
+
+  service:
+    type: ClusterIP
+
+promtail:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+
+grafana:
+  enabled: false
