@@ -9,6 +9,8 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -37,4 +39,16 @@ func InitTracer(ctx context.Context) (*sdktrace.TracerProvider, error) {
 
 	otel.SetTracerProvider(tp)
 	return tp, nil
+}
+
+func TracerLogger(ctx context.Context, baseLogger *zap.Logger) *zap.Logger {
+	spanCtx := trace.SpanContextFromContext(ctx)
+	if !spanCtx.IsValid() {
+		return baseLogger
+	}
+
+	return baseLogger.With(
+		zap.String("trace_id", spanCtx.SpanID().String()),
+		zap.String("span_id", spanCtx.SpanID().String()),
+	)
 }

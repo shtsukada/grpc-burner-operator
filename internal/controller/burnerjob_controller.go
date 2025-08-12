@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,6 +20,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	burnerv1alpha1 "github.com/shtsukada/grpc-burner-operator/api/v1alpha1"
+	"github.com/shtsukada/grpc-burner-operator/internal/tracing"
 )
 
 type BurnerJobReconciler struct {
@@ -43,6 +45,11 @@ func (r *BurnerJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	tracer := otel.Tracer("controller.burnerjob")
 	ctx, span := tracer.Start(ctx, "Reconcile")
 	defer span.End()
+
+	baseLogger := zap.L()
+	logger := tracing.TracerLogger(ctx, baseLogger)
+
+	logger.Info("Reconciling BurnerJob", zap.String("name", req.Name), zap.String("namespace", req.Namespace))
 
 	burnerjob := &burnerv1alpha1.BurnerJob{}
 	if err := r.Get(ctx, req.NamespacedName, burnerjob); err != nil {

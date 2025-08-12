@@ -2,7 +2,7 @@ grafana:
   service:
     type: LoadBalancer
   persistence:
-    enabled: true
+    enabled: false
     storageClassName: standard
     accessModes:
       - ReadWriteOnce
