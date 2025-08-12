@@ -6,14 +6,31 @@ metadata:
   labels:
     grafana_datasource: "1"
 data:
-  tempo-datasource.yaml: |
+  tempo-datasource.yaml: |-
     apiVersion: 1
     datasources:
       - name: Tempo
+        uid: tempo
         type: tempo
         access: proxy
-        orgId: 1
         url: http://tempo.monitoring.svc.cluster.local:3100
+        basicAuth: false
         isDefault: false
-        version: 1
-        editable: true
+        jsonData:
+          httpMethod: GET
+          tracesToLogs:
+            datasourceUid: loki
+            tags: ["pod", "namespace"]
+            mappedTags:
+              - key: "service.name"
+                value: "service"
+            spanStartTimeShift: "-1h"
+            spanEndTimeShift: "1h"
+            filterByTraceID: true
+            filterBySpanID: false
+          derivedFields:
+            - name: trace_id
+              matcherRegex: "trace_id\":\"(\\w+)\"
+              datasourceUid: tempo
+              url: "$${__value.raw}"
+              urlDisplayLabel: "View Trace"

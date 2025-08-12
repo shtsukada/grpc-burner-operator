@@ -1,6 +1,6 @@
 loki:
   persistence:
-    enabled: true
+    enabled: false
     storageClassName: standard
     size: 10Gi
 

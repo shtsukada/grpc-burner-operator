@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otelcollector
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: otelcollector
+  namespaceSelector:
+    matchNames: ["monitoring"]
+  endpoints:
+    - port: metrics
+      interval: 15s
