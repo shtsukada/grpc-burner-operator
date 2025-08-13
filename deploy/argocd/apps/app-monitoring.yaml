@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-stack
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: grpc-burner
+  sources:
+    - repoURL: https://github.com/shtsukada/grpc-burner-operator.git
+      targetRevision: main
+      path: config/monitoring
+      kustomize: {}
+    - repoURL: https://github.com/shtsukada/grpc-burner-operator.git
+      targetRevision: main
+      path: config/prometheus
+      kustomize: {}
+    - repoURL: https://github.com/shtsukada/grpc-burner-operator.git
+      targetRevision: main
+      path: config/network-policy
+      kustomize: {}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  revisionHistoryLimit: 5
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
