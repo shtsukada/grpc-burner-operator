@@ -24,7 +24,7 @@ import (
 )
 
 type BurnerJobReconciler struct {
-	client.Client
+	Client client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
@@ -52,7 +52,7 @@ func (r *BurnerJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	logger.Info("Reconciling BurnerJob", zap.String("name", req.Name), zap.String("namespace", req.Namespace))
 
 	burnerjob := &burnerv1alpha1.BurnerJob{}
-	if err := r.Get(ctx, req.NamespacedName, burnerjob); err != nil {
+	if err := r.Client.Get(ctx, req.NamespacedName, burnerjob); err != nil {
 		log.Error(err, "unable to fetch BurnerJob")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -61,7 +61,7 @@ func (r *BurnerJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	jobName := req.Name + "-job"
 	var existingJob batchv1.Job
-	err := r.Get(ctx, types.NamespacedName{Name: jobName, Namespace: req.Namespace}, &existingJob)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: jobName, Namespace: req.Namespace}, &existingJob)
 	if err == nil {
 		log.Info("Job already exists, skipping creation", "job", jobName)
 	} else if !apierrors.IsNotFound(err) {
@@ -100,7 +100,7 @@ func (r *BurnerJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			log.Error(err, "Failed to set controller reference")
 			return ctrl.Result{}, err
 		}
-		if err := r.Create(ctx, job); err != nil {
+		if err := r.Client.Create(ctx, job); err != nil {
 			log.Error(err, "Failed to create Job", "job", job.Name)
 			return ctrl.Result{}, err
 		}
@@ -138,7 +138,7 @@ func (r *BurnerJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if updated {
-		if err := r.Status().Update(ctx, burnerjob); err != nil {
+		if err := r.Client.Status().Update(ctx, burnerjob); err != nil {
 			log.Error(err, "Failed to update BurnerJob status")
 			return ctrl.Result{}, err
 		}

@@ -29,7 +29,7 @@ import (
 
 // ObservabilityConfigReconciler reconciles a ObservabilityConfig object
 type ObservabilityConfigReconciler struct {
-	client.Client
+	Client client.Client
 	Scheme *runtime.Scheme
 }
 
@@ -58,7 +58,7 @@ func (r *ObservabilityConfigReconciler) Reconcile(ctx context.Context, req ctrl.
 	defer span.End()
 
 	var obsConfig grpcv1alpha1.ObservabilityConfig
-	if err := r.Get(ctx, req.NamespacedName, &obsConfig); err != nil {
+	if err := r.Client.Get(ctx, req.NamespacedName, &obsConfig); err != nil {
 		logger.Error(err, "unable to fetch ObservabilityConfig")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -74,7 +74,7 @@ func (r *ObservabilityConfigReconciler) Reconcile(ctx context.Context, req ctrl.
 	obsConfig.Status.MetricsActive = &obsConfig.Spec.MetricsEnabled
 	obsConfig.Status.Message = "settings changed"
 
-	if err := r.Status().Update(ctx, &obsConfig); err != nil {
+	if err := r.Client.Status().Update(ctx, &obsConfig); err != nil {
 		logger.Error(err, "Failed to update ObservabilityConfig status")
 		return ctrl.Result{}, err
 	}

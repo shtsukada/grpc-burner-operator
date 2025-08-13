@@ -39,7 +39,7 @@ import (
 const grpcburnerFinalizer = "grpcburner.grpc.burner.dev/finalizer"
 
 type GrpcBurnerReconciler struct {
-	client.Client
+	Client client.Client
 	Scheme *runtime.Scheme
 }
 
@@ -74,7 +74,7 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	defer span.End()
 
 	var grpcburner grpcv1alpha1.GrpcBurner
-	if err := r.Get(ctx, req.NamespacedName, &grpcburner); err != nil {
+	if err := r.Client.Get(ctx, req.NamespacedName, &grpcburner); err != nil {
 		log.Error(err, "Failed to fetch GrpcBurner resource")
 		metrics.ReconcileErrors.WithLabelValues("grpcburner").Inc()
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -84,19 +84,19 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	deployName := grpcburner.Name + "-burner"
 	var deploy appsv1.Deployment
-	_ = r.Get(ctx, types.NamespacedName{Name: deployName, Namespace: grpcburner.Namespace}, &deploy)
+	_ = r.Client.Get(ctx, types.NamespacedName{Name: deployName, Namespace: grpcburner.Namespace}, &deploy)
 
 	if grpcburner.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(&grpcburner, grpcburnerFinalizer) {
 			log.Info("Adding finalizer")
 
-			if err := r.Get(ctx, req.NamespacedName, &grpcburner); err != nil {
+			if err := r.Client.Get(ctx, req.NamespacedName, &grpcburner); err != nil {
 				log.Error(err, "Failed to re-fetch GrpcBurner before adding finalizer")
 				return ctrl.Result{}, err
 			}
 
 			controllerutil.AddFinalizer(&grpcburner, grpcburnerFinalizer)
-			if err := r.Update(ctx, &grpcburner); err != nil {
+			if err := r.Client.Update(ctx, &grpcburner); err != nil {
 				log.Error(err, "Failed to update GrpcBurner with finalizer")
 				return ctrl.Result{}, err
 			}
@@ -113,14 +113,14 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 			log.Info("Running finalizer: deleting Deployment", "deployment", deployName)
 
-			if err := r.Delete(ctx, &deploy); client.IgnoreNotFound(err) != nil {
+			if err := r.Client.Delete(ctx, &deploy); client.IgnoreNotFound(err) != nil {
 				log.Error(err, "Failed to delete Deployment during finalization", "deployment", deployName)
 				metrics.ReconcileErrors.WithLabelValues("grpcburner").Inc()
 				return ctrl.Result{}, err
 			}
 
 			controllerutil.RemoveFinalizer(&grpcburner, grpcburnerFinalizer)
-			if err := r.Update(ctx, &grpcburner); err != nil {
+			if err := r.Client.Update(ctx, &grpcburner); err != nil {
 				log.Error(err, "Failed to remove finalizer from GrpcBurner")
 				metrics.ReconcileErrors.WithLabelValues("grpcburner").Inc()
 				return ctrl.Result{}, err
@@ -129,11 +129,11 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			log.Info("Finalizer cleanup complete")
 		}
 	}
-	err := r.Get(ctx, types.NamespacedName{Name: deployName, Namespace: grpcburner.Namespace}, &deploy)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: deployName, Namespace: grpcburner.Namespace}, &deploy)
 	if errors.IsNotFound(err) {
 		log.Info("Deployment not found, creating new one")
 		deploy = generateDeployment(&grpcburner)
-		if err := r.Create(ctx, &deploy); err != nil {
+		if err := r.Client.Create(ctx, &deploy); err != nil {
 			log.Error(err, "Failed to create Deployment")
 			metrics.ReconcileErrors.WithLabelValues("grpcburner").Inc()
 			return ctrl.Result{}, err
@@ -148,13 +148,13 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if !isDeploymentSpecEqual(deploy.Spec, desired.Spec) {
 			log.Info("Updating Deployment spec to match desired state")
 
-			if err := r.Get(ctx, types.NamespacedName{Name: deployName, Namespace: grpcburner.Namespace}, &deploy); err != nil {
+			if err := r.Client.Get(ctx, types.NamespacedName{Name: deployName, Namespace: grpcburner.Namespace}, &deploy); err != nil {
 				log.Error(err, "Failed to re-fetch Deployment before update")
 				return ctrl.Result{}, err
 			}
 
 			deploy.Spec = desired.Spec
-			if err := r.Update(ctx, &deploy); err != nil {
+			if err := r.Client.Update(ctx, &deploy); err != nil {
 				log.Error(err, "Failed to update Deployment spec")
 				return ctrl.Result{}, err
 			}
@@ -184,7 +184,7 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	if updated {
 		var fresh grpcv1alpha1.GrpcBurner
-		if err := r.Get(ctx, req.NamespacedName, &fresh); err != nil {
+		if err := r.Client.Get(ctx, req.NamespacedName, &fresh); err != nil {
 			log.Error(err, "Failed to re-fetch GrpcBurner before status update")
 			metrics.ReconcileErrors.WithLabelValues("grpcburner").Inc()
 			return ctrl.Result{}, err
@@ -194,7 +194,7 @@ func (r *GrpcBurnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		fresh.Status.Phase = grpcburner.Status.Phase
 		fresh.Status.LastRunTime = grpcburner.Status.LastRunTime
 
-		if err := r.Status().Update(ctx, &fresh); err != nil {
+		if err := r.Client.Status().Update(ctx, &fresh); err != nil {
 			log.Error(err, "Failed to update GrpcBurner status")
 			metrics.ReconcileErrors.WithLabelValues("grpcburner").Inc()
 			return ctrl.Result{}, err
