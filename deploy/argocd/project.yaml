@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: grpc-burner
+  namespace: argocd
+spec:
+  description: Project for grpc-burner-operator and monitoring stack
+  destinations:
+    - namespace: grpc-app
+      server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+  sourceRepos:
+    - https://github.com/shtsukada/grpc-burner-operator.git
+    - https://open-telemetry.github.io/opentelemetry-helm-charts
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

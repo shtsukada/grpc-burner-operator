@@ -19,9 +19,11 @@ ports:
 
 service:
   type: ClusterIP
+  labels:
+    app.kubernetes.io/name: otelcollector
 
 serviceMonitor:
-  enabled: true
+  enabled: false
 
 image:
   repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
