@@ -1,0 +1,26 @@
+name: e2e
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Run E2E
+        run: |
+          if [ -d test/e2e ]; then
+            if grep -q "test-e2e" Makefile 2>/dev/null; then
+              make test-e2e
+            else
+              go test ./test/e2e/... -v
+            fi
+          else
+            echo "E2E tests not found. Skipping."

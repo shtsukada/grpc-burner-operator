@@ -1,23 +1,62 @@
-name: Tests
-
+name: test
 on:
   push:
+    branches: [ main, "feature/**" ]
   pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
 
 jobs:
-  test:
-    name: Run on Ubuntu
-    runs-on: ubuntu-latest
+  unit-test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
     steps:
-      - name: Clone the code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: 'go.mod'
+          cache: true
 
-      - name: Running Tests
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-gobuild-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gobuild-
+
+      - name: Install setup-envtest (match controller-runtime v0.21)
         run: |
-          go mod tidy
-          make test
+          GOBIN=$HOME/bin go install sigs.k8s.io/controller-runtime/tools/setup-envtest@release-0.21
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Setup envtest assets
+        run: |
+          echo "KUBEBUILDER_ASSETS=$(setup-envtest use -i -p path 1.33.0)" >> $GITHUB_ENV
+
+      - name: Dependencies
+        run: go mod download
+
+      - name: Run unit tests (race + cover)
+        env:
+          KUBEBUILDER_ASSETS: ${{ env.KUBEBUILDER_ASSETS }}
+        run: |
+          mkdir -p ./coverage
+          go test ./... -race -covermode=atomic -coverprofile=coverage/cover.out -v
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/cover.out
+
+      - name: Coverage summary
+        run: go tool cover -func=coverage/cover.out | tail -n 10

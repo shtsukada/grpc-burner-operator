@@ -1,23 +1,132 @@
-name: Lint
-
+name: lint
 on:
   push:
+    branches: [ main, "feature/**" ]
   pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
 
 jobs:
   lint:
-    name: Run on Ubuntu
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+
     steps:
-      - name: Clone the code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: 'go.mod'
+          cache: true
 
-      - name: Run linter
-        uses: golangci/golangci-lint-action@v8
+      - name: Cache Go build cache
+        uses: actions/cache@v4
         with:
-          version: v2.1.0
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-gobuild-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gobuild-
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.60.3
+          args: --timeout=5m
+
+      - name: Install controller-gen
+        run: |
+          go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.3
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: make generate (diff check)
+        run: |
+          if make -q generate 2>/dev/null; then
+            make generate
+          else
+            echo "skip make generate"
+          fi
+          git status --porcelain
+          git diff --exit-code
+
+      - name: make manifests (diff check)
+        run: |
+          if make -q manifests 2>/dev/null; then
+            make manifests
+          else
+            echo "skip make manifests"
+          fi
+          git status --porcelain
+          git diff --exit-code
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.4
+
+      - name: kustomize build (config/default)
+        run: |
+          if [ -d config/default ]; then
+            kubectl kustomize config/default >/tmp/kustomize-default.yaml
+          else
+            echo "skip kustomize (config/default not found)"
+          fi
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.4
+
+      - name: Helm repo add
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+
+      - name: Validate kube-prometheus-stack values
+        if: ${{ hashFiles('config/monitoring/kube-prometheus-stack/values.yaml') != '' }}
+        run: |
+          helm template test prometheus-community/kube-prometheus-stack \
+            -f config/monitoring/kube-prometheus-stack/values.yaml \
+            > /tmp/kps-render.yaml
+
+      - name: Validate loki-stack values
+        if: ${{ hashFiles('config/monitoring/loki-stack/values.yaml') != '' }}
+        run: |
+          helm template test grafana/loki-stack \
+            -f config/monitoring/loki-stack/values.yaml \
+            > /tmp/loki-render.yaml
+
+      - name: Validate tempo values
+        if: ${{ hashFiles('config/monitoring/tempo/values.yaml') != '' }}
+        run: |
+          helm template test grafana/tempo \
+            -f config/monitoring/tempo/values.yaml \
+            > /tmp/tempo-render.yaml
+
+      - name: Validate otel-collector values (infra/helm/otel-collector)
+        if: ${{ hashFiles('infra/helm/otel-collector/values.yaml') != '' }}
+        run: |
+          echo "# values 構文確認のみ（template出力はスキップ）"
+          yq e '.' infra/helm/otel-collector/values.yaml >/dev/null 2>&1 || {
+            echo "invalid YAML: infra/helm/otel-collector/values.yaml"; exit 1; }
+
+      - name: Upload rendered manifests
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-manifests
+          path: |
+            /tmp/*-render.yaml
+            /tmp/kustomize-default.yaml
+          if-no-files-found: ignore
