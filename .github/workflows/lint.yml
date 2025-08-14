@@ -22,6 +22,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Go
+        id: go
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
@@ -31,9 +32,15 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/go-build
-          key: ${{ runner.os }}-gobuild-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-gobuild-${{ steps.go.outputs.go-version }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-gobuild-
+            ${{ runner.os }}-gobuild-${{ steps.go.outputs.go-version }}-
+
+      - name: Run golangci-lint
+        run: |
+          go env
+          go clean -cache
+          go clean -modcache
 
       - name: go vet
         run: go vet ./...
