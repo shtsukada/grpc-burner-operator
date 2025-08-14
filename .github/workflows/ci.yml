@@ -2,39 +2,60 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version: '1.22.x'
 
-      - name: Install Kubebuilder
-        run: |
-          KUBEBUILDER_VERSION=3.14.0
-          curl -L "https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${KUBEBUILDER_VERSION}/kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64.tar.gz" -o kubebuilder.tar.gz
-          tar -xzf kubebuilder.tar.gz -C /tmp/
-          sudo mv /tmp/kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64 /usr/local/kubebuilder
-      - name: Add Kubebuilder to PATH
-        run: echo "/usr/local/kubebuilder/bin" >> $GITHUB_PATH
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0
 
-      - name: Verify manifests are up-to-date
-        run: |
-          make manifests
-          git diff --exit-code
+      - name: Run golangci-lint
+        run: golangci-lint run ./...
 
-      - name: Run go vet
-        run: make vet
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Run unit tests
-        run: make test
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+
+      - name: Build
+        run: go build ./...
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+
+      - name: Build test image
+        run: make docker-build IMG=my-operator:test
+
+      - name: Kind cluster
+        uses: helm/kind-action@v1.9.0
+        with:
+          cluster_name: kind
+
+      - name: Load image into kind
+        run: kind load docker-image my-operator:test --name kind
+
+      - name: Run E2E tests
+        run: make test-e2e

@@ -40,8 +40,7 @@ jobs:
 
       - name: Setup envtest assets
         run: |
-          setup-envtest fetch 1.31.x
-          assets=$(setup-envtest use -i -p path 1.31.x)
+          assets=$(setup-envtest use 1.31.x -p path)
           echo "KUBEBUILDER_ASSETS=$assets" >> $GITHUB_ENV
           ls -l "$assets"
 
