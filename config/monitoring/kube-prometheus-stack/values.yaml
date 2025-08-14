@@ -10,6 +10,7 @@ grafana:
   adminPassword: admin
   initChownData:
     enabled: false
+  envFromSecret: grafana-alerting-env
 
 prometheus:
   prometheusSpec:
@@ -24,6 +25,8 @@ prometheus:
 
 alertmanager:
   alertmanagerSpec:
+    secrets:
+      - alertmanager-slack-webhook
     storage:
       volumeClaimTemplate:
         spec:
@@ -32,3 +35,36 @@ alertmanager:
           resources:
             requests:
               storage: 4Gi
+
+
+  extraConfigmapMounts:
+    - name: grafana-alerting-provisioning
+      mountPath: /etc/grafana/provisioning/alerting
+      configMap: grafana-alerting-provisioning
+      readOnly: true
+      subPath: ""
+
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname','namespace']
+      group_wait: 30s
+      group_interval: 2m
+      repeat_interval: 4h
+      receiver: 'slack-notifications'
+      routes:
+        - matchers: [ severity="critical" ]
+          receiver: 'slack-notifications'
+    receivers:
+      - name: 'slack-notifications'
+        slack_configs:
+          - send_resolved: true
+            api_url_file: '/etc/alertmanager/secrets/alertmanager-slack-webhook/url'
+            channel: '#alerts'
+            title: '{{ .CommonLabels.alertname }} ({{ .CommonLabels.severity }})'
+            text: >-
+              {{ range .Alerts -}}
+              *{{ .Labels.namespace }}/{{ .Labels.pod | default .Labels.deployment | default "n/a" }}* {{ .Annotations.summary }}
+              {{ if .Annotations.description }}\n{{ .Annotations.description }}{{ end }}
+              {{ end }}
