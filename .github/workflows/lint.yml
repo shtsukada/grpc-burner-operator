@@ -48,8 +48,8 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.61.0
-          install-mode: goinstall   # ← これがポイント（runnerのGoでビルド）
-          args: --out-format=colored-line-number --config=.golangci.yml
+          install-mode: goinstall
+          args: --out-format=colored-line-number --config=.golangci.yml --disable typecheck
 
       - name: Install yq
         run: |

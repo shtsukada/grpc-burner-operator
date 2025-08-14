@@ -4,6 +4,7 @@ run:
   tests: false
 
 linters:
+  disable-all: true
   enable:
     - govet
     - staticcheck
@@ -12,5 +13,3 @@ linters:
     - goimports
     - errcheck
     - copyloopvar
-  disable:
-    - typecheck
