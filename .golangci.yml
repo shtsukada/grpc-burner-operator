@@ -4,12 +4,13 @@ run:
   tests: false
 
 linters:
-  disable-all: true
   enable:
-    - govet
-    - staticcheck
-    - revive
     - gofmt
     - goimports
+    - revive
+    - staticcheck
     - errcheck
     - copyloopvar
+    - goconst
+    - dupl
+    - gocyclo
