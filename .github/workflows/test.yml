@@ -40,12 +40,9 @@ jobs:
 
       - name: Setup envtest assets
         run: |
-          echo "KUBEBUILDER_ASSETS=$(setup-envtest use -i -p path 1.31.x)" >> $GITHUB_ENV
-
-      - name: Show envtest assets
-        run: |
-          echo "$KUBEBUILDER_ASSETS"
-          ls -l "$KUBEBUILDER_ASSETS"
+          assets=$(setup-envtest use -i -p path 1.31.x)
+          echo "KUBEBUILDER_ASSETS=$assets" >> $GITHUB_ENV
+          ls -l "$assets"
 
       - name: Dependencies
         run: go mod download
