@@ -1,33 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: grpc-burner
+  name: app-argocd-system
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
     notifications.argoproj.io/subscribe.on-sync-failed.slack: "#alerts"
     notifications.argoproj.io/subscribe.on-sync-repaired.slack: "#alerts"
 spec:
   project: grpc-burner
   source:
-    repoURL: https://github.com/shtsukada/grpc-burner-operator.git
+    repoURL: https://github.com/tsukadashunsuke/grpc-burner-operator.git
     targetRevision: main
-    path: config/default
-    kustomize: {}
+    path: deploy/argocd/system
   destination:
     server: https://kubernetes.default.svc
-    namespace: grpc-burner-operator-system
-  revisionHistoryLimit: 5
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-    retry:
-      limit: 3
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 2m
-    syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true

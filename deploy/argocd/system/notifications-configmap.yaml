@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  subscriptions: |
+    - recipients:
+      - slack:#alerts
+      triggers:
+      - on-sync-failed
+  service.webhook.slack: |
+    url: $slack-webhook
+
+  template.app-sync-failed: |
+    webhook:
+      slack:
+        method: POST
+        body: |
+          {
+            "text": ":x: *{{.app.metadata.name}}* sync *FAILED* on *{{.app.spec.destination.namespace}}* ({{.app.status.sync.status}}/{{.app.status.health.status}})\n*Message*: {{.context.message}}"
+          }
+
+  template.app-sync-repaired: |
+    webhook:
+      slack:
+        method: POST
+        body: |
+          {
+            "text": ":white_check_mark: *{{.app.metadata.name}}* sync *Self-Healed* :sparkles:"
+          }
+
+  trigger.on-sync-failed: |
+    when: app.status.operationState.phase in ['Error', 'Failed']
+    send:
+    - app-sync-failed
+
+  trigger.on-sync-repaired: |
+    when: app.status.health.status == 'Healthy' && app.status.sync.status == 'Synced'
+    send:
+    - app-sync-repaired
