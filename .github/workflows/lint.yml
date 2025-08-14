@@ -42,7 +42,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.60.3
-          args: --timeout=5m --out-format=colored-line-number --go=1.23
+          args: --out-format=colored-line-number --go=1.23 --config=.golangci.yml
 
       - name: Install controller-gen
         run: |

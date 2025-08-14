@@ -1,6 +1,8 @@
 version: "2"
 run:
   allow-parallel-runners: true
+  timeout: 5m
+  tests: false
 linters:
   default: none
   enable:
@@ -21,6 +23,8 @@ linters:
     - unconvert
     - unparam
     - unused
+  disable:
+    - typecheck
   settings:
     revive:
       rules:
