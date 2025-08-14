@@ -20,7 +20,7 @@ jobs:
             if grep -q "test-e2e" Makefile 2>/dev/null; then
               make test-e2e
             else
-              go test ./test/e2e/... -v
+              go test -tags=e2e ./test/e2e/... -v
             fi
           else
             echo "E2E tests not found. Skipping."
